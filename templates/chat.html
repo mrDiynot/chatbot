@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #357abd;
+            --bot-message-bg: #f8f9fa;
+            --user-message-bg: #4a90e2;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            backdrop-filter: blur(4px);
+            height: 85vh;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem;
+            border-radius: 20px 20px 0 0;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .chat-header-icon {
+            font-size: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        .chat-messages {
+            height: calc(85vh - 160px);
+            overflow-y: auto;
+            padding: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: slideIn 0.5s ease forwards;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .user-message .avatar {
+            background: var(--user-message-bg);
+            color: white;
+            order: 2;
+        }
+
+        .bot-message .avatar {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .message-content {
+            padding: 1rem 1.5rem;
+            border-radius: 20px;
+            max-width: calc(100% - 100px);
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .message-content:hover {
+            transform: translateY(-2px);
+        }
+
+        .user-message .message-content {
+            background: var(--user-message-bg);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message .message-content {
+            background: var(--bot-message-bg);
+            color: black;
+            border-bottom-left-radius: 5px;
+        }
+
+        .bot-message .message-content pre {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #eee;
+        }
+
+        .bot-message .message-content code {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .chat-input {
+            padding: 1.5rem;
+            background: white;
+            border-top: 1px solid #eee;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .input-group {
+            background: white;
+            border-radius: 15px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control {
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 10px !important;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus {
+            box-shadow: none;
+            background: white;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 1rem 1.5rem;
+            background: var(--bot-message-bg);
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            width: fit-content;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 3px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Custom scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="chat-container animate__animated animate__fadeIn">
+            <div class="chat-header">
+                <div class="chat-header-icon">🤖</div>
+                AI Chat Assistant
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="bot-message message">
+                    <div class="avatar">🤖</div>
+                    <div class="message-content">
+                        Hello! I'm your AI assistant. How can I help you today?
+                    </div>
+                    <div class="timestamp">Now</div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+            <div class="chat-input">
+                <form id="chatForm">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userInput" placeholder="Type your message..."
+                            required>
+                        <button type="submit" class="btn btn-primary">
+                            Send ▶
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        marked.setOptions({
+            highlight: function (code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            userInput.value = '';
+
+            document.getElementById('typingIndicator').style.display = 'block';
+
+            try {
+                const response = await fetch('/chat_response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('typingIndicator').style.display = 'none';
+                addMessage(data.response, false, data.timestamp);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('typingIndicator').style.display = 'none';
+                addMessage('Sorry, something went wrong. Please try again.', false);
+            }
+        });
+
+        function addMessage(content, isUser, timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `${isUser ? 'user' : 'bot'}-message message`;
+
+            const formattedContent = isUser ? content : marked.parse(content);
+
+            messageDiv.innerHTML = `
+                <div class="avatar">${isUser ? '👤' : '🤖'}</div>
+                <div class="message-content">${formattedContent}</div>
+                <div class="timestamp">${timestamp}</div>
+            `;
+
+            messagesDiv.insertBefore(messageDiv, document.getElementById('typingIndicator'));
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            if (!isUser) {
+                messageDiv.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>
